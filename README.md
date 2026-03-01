@@ -41,6 +41,22 @@ Works flawlessly on phones, tablets, and desktops
 
 Touch‑optimized with no 300ms delay
 
+🖼️ Screenshots & Demos
+
+      Screenshots 
+       
+<img width="555" height="973" alt="Screenshot 2026-03-01 153758" src="https://github.com/user-attachments/assets/3c94fe59-cd50-4371-a3b9-fe40284744ab" />
+<img width="596" height="935" alt="Screenshot 2026-03-01 153747" src="https://github.com/user-attachments/assets/2f71802d-1c76-43ee-a1b2-dfc2f1761bb9" />  
+
+
+      Videos 
+
+
+https://github.com/user-attachments/assets/5e2c3f9b-d143-4e95-b5f9-7c4ffac45bbe
+
+
+      
+
 🚀 Getting Started
 Installation
 Download the index.html file from the latest release.

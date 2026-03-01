@@ -1,0 +1,739 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>vibe calculator · ultra glass</title>
+    <style>
+        /* ---------- reset & base ---------- */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        }
+
+        body {
+            min-height: 100vh;
+            background: #0b0b0f;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 1rem;
+        }
+
+        /* main card */
+        .calculator {
+            position: relative;
+            width: 100%;
+            max-width: 420px;
+            border-radius: 2.5rem;
+            overflow: hidden;
+            box-shadow: 0 30px 60px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(255, 255, 255, 0.1) inset;
+            transition: box-shadow 0.3s;
+        }
+
+        /* background media layer */
+        .calculator__bg {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            z-index: 0;
+            pointer-events: none;
+        }
+
+        /* glass panel – ultra transparent */
+        .calculator__glass {
+            position: relative;
+            z-index: 2;
+            background: rgba(255, 255, 255, 0.1);  /* very light, almost clear */
+            backdrop-filter: blur(30px) saturate(200%);
+            -webkit-backdrop-filter: blur(30px) saturate(200%);
+            border-radius: inherit;
+            padding: 1.8rem 1.5rem;
+            color: #fff;
+            transition: background 0.2s, backdrop-filter 0.2s;
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.3);
+            text-shadow: 0 2px 8px rgba(0,0,0,0.5); /* ensures readability on light backgrounds */
+        }
+
+        /* header with memory, history, settings */
+        .header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 2rem;
+            font-size: 0.85rem;
+            font-weight: 400;
+            letter-spacing: 0.3px;
+            color: rgba(255, 255, 255, 0.9);
+        }
+
+        .memory-badge, .history-badge {
+            background: rgba(0, 0, 0, 0.2);
+            backdrop-filter: blur(8px);
+            padding: 0.4rem 1rem;
+            border-radius: 40px;
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+        }
+
+        .history-badge {
+            max-width: 160px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .settings-btn {
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.15);
+            border: 1px solid rgba(255, 255, 255, 0.25);
+            color: white;
+            font-size: 1.6rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            backdrop-filter: blur(8px);
+        }
+        .settings-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: scale(1.05);
+            border-color: rgba(255, 215, 0, 0.5);
+        }
+        .settings-btn:active {
+            transform: scale(0.95);
+        }
+
+        /* display */
+        .display {
+            background: rgba(0, 0, 0, 0.2);
+            backdrop-filter: blur(8px);
+            border-radius: 2rem;
+            padding: 1.2rem 1.8rem;
+            margin-bottom: 2rem;
+            text-align: right;
+            font-size: 3.2rem;
+            font-weight: 300;
+            line-height: 1.2;
+            letter-spacing: -1px;
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.3), inset 0 0 0 1px rgba(255,255,255,0.05);
+            color: white;
+            text-shadow: 0 2px 10px rgba(0,0,0,0.6);
+            overflow-x: auto;
+            white-space: nowrap;
+        }
+
+        /* button grid */
+        .buttons {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 0.7rem;
+        }
+
+        .btn {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 1.8rem;
+            padding: 1rem 0.2rem;
+            font-size: 1.3rem;
+            font-weight: 500;
+            color: white;
+            cursor: pointer;
+            transition: all 0.12s cubic-bezier(0.2, 0, 0, 1);
+            backdrop-filter: blur(8px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2), 0 0 0 1px rgba(255,255,255,0.05) inset;
+            text-shadow: 0 2px 5px rgba(0,0,0,0.4);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .btn:active {
+            transform: scale(0.92);
+            background: rgba(255, 255, 255, 0.25);
+            box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+        }
+        .btn.operator {
+            background: rgba(255, 200, 50, 0.2);
+            color: #ffd966;
+            border-color: rgba(255, 215, 0, 0.3);
+        }
+        .btn.operator:active {
+            background: rgba(255, 200, 50, 0.35);
+        }
+        .btn.equals {
+            background: rgba(0, 200, 150, 0.25);
+            color: #7fffd4;
+            border-color: rgba(0, 255, 200, 0.3);
+        }
+        .btn.memory {
+            background: rgba(100, 150, 255, 0.2);
+            color: #aac8ff;
+            font-size: 1rem;
+        }
+        .btn[data-size="2"] {
+            grid-column: span 2;
+        }
+
+        /* theme panel – floating modal */
+        .theme-panel {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) scale(0.95);
+            width: 90%;
+            max-width: 400px;
+            background: rgba(20, 25, 35, 0.8);
+            backdrop-filter: blur(30px) saturate(200%);
+            border-radius: 2.5rem;
+            padding: 2rem;
+            color: white;
+            z-index: 200;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.25s, transform 0.3s, visibility 0.25s;
+            border: 1px solid rgba(255,255,255,0.2);
+            box-shadow: 0 30px 60px rgba(0,0,0,0.6);
+        }
+        .theme-panel.active {
+            opacity: 1;
+            visibility: visible;
+            transform: translate(-50%, -50%) scale(1);
+        }
+        .theme-panel h3 {
+            font-weight: 400;
+            font-size: 1.8rem;
+            margin-bottom: 1.5rem;
+            text-align: center;
+            letter-spacing: -0.5px;
+        }
+
+        .theme-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+        .theme-option {
+            background: rgba(255,255,255,0.1);
+            border: 1px solid rgba(255,255,255,0.2);
+            border-radius: 2rem;
+            padding: 1rem 0.5rem;
+            text-align: center;
+            cursor: pointer;
+            transition: 0.2s;
+            backdrop-filter: blur(5px);
+        }
+        .theme-option:hover {
+            background: rgba(255,255,255,0.2);
+            transform: translateY(-2px);
+        }
+        .theme-option.selected {
+            border: 2px solid #ffd966;
+            background: rgba(255,215,0,0.2);
+        }
+
+        .control-group {
+            margin: 1.5rem 0;
+        }
+        .control-group label {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 0.5rem;
+            opacity: 0.9;
+        }
+        input[type=range] {
+            width: 100%;
+            height: 6px;
+            background: rgba(255,255,255,0.2);
+            border-radius: 10px;
+            -webkit-appearance: none;
+        }
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 20px;
+            height: 20px;
+            background: white;
+            border-radius: 50%;
+            box-shadow: 0 0 10px #ffd966;
+            cursor: pointer;
+        }
+
+        .upload-area {
+            display: flex;
+            gap: 0.8rem;
+            margin: 1.5rem 0;
+        }
+        .upload-btn {
+            flex: 1;
+            background: rgba(255,255,255,0.15);
+            border: 1px solid rgba(255,255,255,0.25);
+            border-radius: 2rem;
+            padding: 0.8rem 0;
+            font-size: 0.9rem;
+            color: white;
+            cursor: pointer;
+            transition: 0.2s;
+            text-align: center;
+        }
+        .upload-btn:hover {
+            background: rgba(255,255,255,0.25);
+        }
+
+        .close-btn {
+            width: 100%;
+            padding: 1rem;
+            background: #ffd966;
+            border: none;
+            border-radius: 3rem;
+            font-weight: 600;
+            color: #1a1a2e;
+            font-size: 1.2rem;
+            cursor: pointer;
+            transition: 0.2s;
+            margin-top: 1rem;
+        }
+        .close-btn:hover {
+            background: #ffe085;
+            transform: scale(1.02);
+        }
+
+        /* overlay */
+        .overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.4);
+            backdrop-filter: blur(5px);
+            z-index: 150;
+            opacity: 0;
+            visibility: hidden;
+            transition: 0.25s;
+        }
+        .overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        /* utility */
+        .hidden {
+            display: none !important;
+        }
+    </style>
+</head>
+<body>
+    <div class="calculator" id="calculator">
+        <!-- background media (hidden by default) -->
+        <img id="bgImage" class="calculator__bg" src="" alt="" style="display: none;">
+        <video id="bgVideo" class="calculator__bg" loop muted playsinline style="display: none;"></video>
+
+        <!-- main glass interface -->
+        <div class="calculator__glass" id="glassPanel">
+            <div class="header">
+                <span class="history-badge" id="historyDisplay">✨ fresh</span>
+                <span class="memory-badge" id="memoryDisplay">M: 0</span>
+                <button class="settings-btn" id="settingsBtn" aria-label="Theme settings">🎨</button>
+            </div>
+
+            <div class="display" id="display">0</div>
+
+            <div class="buttons">
+                <!-- row 1 -->
+                <button class="btn">7</button>
+                <button class="btn">8</button>
+                <button class="btn">9</button>
+                <button class="btn operator">/</button>
+                <button class="btn">C</button>
+                <!-- row 2 -->
+                <button class="btn">4</button>
+                <button class="btn">5</button>
+                <button class="btn">6</button>
+                <button class="btn operator">*</button>
+                <button class="btn">⌫</button>
+                <!-- row 3 -->
+                <button class="btn">1</button>
+                <button class="btn">2</button>
+                <button class="btn">3</button>
+                <button class="btn operator">-</button>
+                <button class="btn">√</button>
+                <!-- row 4 -->
+                <button class="btn">0</button>
+                <button class="btn">.</button>
+                <button class="btn">±</button>
+                <button class="btn operator">+</button>
+                <button class="btn">x²</button>
+                <!-- row 5 -->
+                <button class="btn" data-action="power">x^y</button>
+                <button class="btn">%</button>
+                <button class="btn equals">=</button>
+                <button class="btn memory">M+</button>
+                <button class="btn memory">MR</button>
+                <!-- row 6 -->
+                <button class="btn memory">MC</button>
+                <button class="btn memory" data-action="ms">MS</button>
+                <button class="btn" data-action="clearHistory">🗑️</button>
+                <button class="btn" disabled style="opacity:0.3; background:transparent;"></button>
+                <button class="btn" disabled style="opacity:0.3; background:transparent;"></button>
+            </div>
+        </div>
+    </div>
+
+    <!-- theme panel -->
+    <div class="overlay" id="overlay"></div>
+    <div class="theme-panel" id="themePanel">
+        <h3>theme studio</h3>
+        <div class="theme-grid" id="themeGrid">
+            <div class="theme-option selected" data-theme="glass">Glass</div>
+            <div class="theme-option" data-theme="dark">Dark</div>
+            <div class="theme-option" data-theme="light">Light</div>
+            <div class="theme-option" data-theme="neon">Neon</div>
+            <div class="theme-option" data-theme="sunset">Sunset</div>
+            <div class="theme-option" data-theme="ocean">Ocean</div>
+            <div class="theme-option" data-theme="custom">Custom</div>
+        </div>
+
+        <div class="control-group">
+            <label><span>glass opacity</span> <span id="opacityVal">0.15</span></label>
+            <input type="range" id="opacitySlider" min="0" max="0.8" step="0.05" value="0.15">
+        </div>
+        <div class="control-group">
+            <label><span>blur strength</span> <span id="blurVal">30px</span></label>
+            <input type="range" id="blurSlider" min="0" max="50" step="1" value="30">
+        </div>
+
+        <div class="upload-area">
+            <button class="upload-btn" id="uploadImageBtn">🖼️ image/gif</button>
+            <button class="upload-btn" id="uploadVideoBtn">🎥 video</button>
+        </div>
+        <input type="file" id="fileInput" accept="image/*,video/mp4,video/gif" style="display: none;">
+
+        <button class="close-btn" id="closeThemeBtn">apply & close</button>
+    </div>
+
+    <script>
+        (function() {
+            // ---------- calculator core ----------
+            const display = document.getElementById('display');
+            const historyEl = document.getElementById('historyDisplay');
+            const memoryEl = document.getElementById('memoryDisplay');
+
+            let current = '0';
+            let first = null;
+            let op = null;
+            let waitSecond = false;
+            let memory = 0;
+            let history = [];
+
+            const updateDisplay = () => display.textContent = current;
+
+            const formatNumber = (num) => {
+                if (Number.isInteger(num)) return num.toString();
+                return parseFloat(num.toFixed(10)).toString();
+            };
+
+            const addHistory = (entry) => {
+                history.unshift(entry);
+                if (history.length > 5) history.pop();
+                historyEl.textContent = history.join(' · ') || '✨ fresh';
+            };
+
+            const calculate = (a, b, operator) => {
+                a = parseFloat(a); b = parseFloat(b);
+                switch(operator) {
+                    case '+': return a + b;
+                    case '-': return a - b;
+                    case '*': return a * b;
+                    case '/': return a / b;
+                    case '^': return Math.pow(a, b);
+                    default: return b;
+                }
+            };
+
+            const inputDigit = (digit) => {
+                if (waitSecond) {
+                    current = digit;
+                    waitSecond = false;
+                } else {
+                    current = current === '0' ? digit : current + digit;
+                }
+                updateDisplay();
+            };
+
+            const inputDecimal = () => {
+                if (waitSecond) {
+                    current = '0.';
+                    waitSecond = false;
+                } else if (!current.includes('.')) {
+                    current += '.';
+                }
+                updateDisplay();
+            };
+
+            const clearAll = () => {
+                current = '0';
+                first = null;
+                op = null;
+                waitSecond = false;
+                updateDisplay();
+            };
+
+            const backspace = () => {
+                if (current.length > 1 && current !== '0') {
+                    current = current.slice(0, -1);
+                } else {
+                    current = '0';
+                }
+                updateDisplay();
+            };
+
+            const toggleSign = () => {
+                current = (parseFloat(current) * -1).toString();
+                updateDisplay();
+            };
+
+            const percent = () => {
+                current = (parseFloat(current) / 100).toString();
+                updateDisplay();
+            };
+
+            const handleOperator = (newOp) => {
+                const val = parseFloat(current);
+                if (op && waitSecond) {
+                    op = newOp;
+                    return;
+                }
+                if (first === null) {
+                    first = val;
+                } else if (op) {
+                    const result = calculate(first, val, op);
+                    addHistory(`${formatNumber(first)} ${op} ${formatNumber(val)} = ${formatNumber(result)}`);
+                    current = formatNumber(result);
+                    first = result;
+                }
+                waitSecond = true;
+                op = newOp;
+                updateDisplay();
+            };
+
+            const equals = () => {
+                if (op && !waitSecond) {
+                    const val = parseFloat(current);
+                    const result = calculate(first, val, op);
+                    addHistory(`${formatNumber(first)} ${op} ${formatNumber(val)} = ${formatNumber(result)}`);
+                    current = formatNumber(result);
+                    first = result;
+                    op = null;
+                    waitSecond = true;
+                    updateDisplay();
+                }
+            };
+
+            const square = () => {
+                const val = parseFloat(current);
+                const result = val * val;
+                addHistory(`${formatNumber(val)}² = ${formatNumber(result)}`);
+                current = formatNumber(result);
+                first = result;
+                op = null;
+                waitSecond = true;
+                updateDisplay();
+            };
+
+            const sqrt = () => {
+                const val = parseFloat(current);
+                if (val < 0) {
+                    current = 'error';
+                } else {
+                    const result = Math.sqrt(val);
+                    addHistory(`√${formatNumber(val)} = ${formatNumber(result)}`);
+                    current = formatNumber(result);
+                    first = result;
+                    op = null;
+                    waitSecond = true;
+                }
+                updateDisplay();
+            };
+
+            const power = () => handleOperator('^');
+
+            // memory
+            const memoryAdd = () => {
+                memory += parseFloat(current);
+                memoryEl.textContent = `M: ${formatNumber(memory)}`;
+            };
+            const memoryRecall = () => {
+                current = formatNumber(memory);
+                waitSecond = true;
+                updateDisplay();
+            };
+            const memoryClear = () => {
+                memory = 0;
+                memoryEl.textContent = 'M: 0';
+            };
+            const memoryStore = () => {
+                memory = parseFloat(current);
+                memoryEl.textContent = `M: ${formatNumber(memory)}`;
+            };
+
+            const clearHistory = () => {
+                history = [];
+                historyEl.textContent = '✨ fresh';
+            };
+
+            // map buttons
+            document.querySelectorAll('.btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    const text = btn.textContent;
+                    const action = btn.dataset.action;
+
+                    if (action === 'power') power();
+                    else if (action === 'ms') memoryStore();
+                    else if (action === 'clearHistory') clearHistory();
+                    else if (text === 'C') clearAll();
+                    else if (text === '⌫') backspace();
+                    else if (text === '±') toggleSign();
+                    else if (text === '%') percent();
+                    else if (text === '√') sqrt();
+                    else if (text === 'x²') square();
+                    else if (text === '=') equals();
+                    else if (text === 'M+') memoryAdd();
+                    else if (text === 'MR') memoryRecall();
+                    else if (text === 'MC') memoryClear();
+                    else if (['+', '-', '*', '/'].includes(text)) handleOperator(text);
+                    else if (text === '.') inputDecimal();
+                    else if (!isNaN(text)) inputDigit(text);
+                });
+            });
+
+            // ---------- theme system ----------
+            const calculatorEl = document.getElementById('calculator');
+            const glassPanel = document.getElementById('glassPanel');
+            const bgImage = document.getElementById('bgImage');
+            const bgVideo = document.getElementById('bgVideo');
+            const overlay = document.getElementById('overlay');
+            const themePanel = document.getElementById('themePanel');
+            const settingsBtn = document.getElementById('settingsBtn');
+            const closeThemeBtn = document.getElementById('closeThemeBtn');
+            const themeGrid = document.getElementById('themeGrid');
+            const themeOptions = document.querySelectorAll('.theme-option');
+            const opacitySlider = document.getElementById('opacitySlider');
+            const blurSlider = document.getElementById('blurSlider');
+            const opacityVal = document.getElementById('opacityVal');
+            const blurVal = document.getElementById('blurVal');
+            const uploadImageBtn = document.getElementById('uploadImageBtn');
+            const uploadVideoBtn = document.getElementById('uploadVideoBtn');
+            const fileInput = document.getElementById('fileInput');
+
+            // preset themes (css background) – now glass is a light gradient
+            const presets = {
+                glass: 'linear-gradient(145deg, #a8c0ff, #3f2b96)', // lighter, vibrant
+                dark: '#0b0d17',
+                light: '#e8ecf2',
+                neon: 'linear-gradient(135deg, #00f5a0, #00d9f5)',
+                sunset: 'linear-gradient(145deg, #ff7e5f, #feb47b)',
+                ocean: 'linear-gradient(145deg, #2193b0, #6dd5ed)',
+                custom: ''
+            };
+
+            let currentTheme = 'glass';
+            let customMedia = null; // { type, url }
+
+            function applyTheme(themeName) {
+                // hide both bg media
+                bgImage.style.display = 'none';
+                bgVideo.style.display = 'none';
+                bgVideo.pause();
+                bgImage.src = '';
+                bgVideo.src = '';
+
+                if (themeName === 'custom' && customMedia) {
+                    if (customMedia.type === 'image') {
+                        bgImage.src = customMedia.url;
+                        bgImage.style.display = 'block';
+                    } else if (customMedia.type === 'video') {
+                        bgVideo.src = customMedia.url;
+                        bgVideo.style.display = 'block';
+                        bgVideo.play().catch(() => {});
+                    }
+                    calculatorEl.style.background = ''; // remove gradient
+                } else {
+                    calculatorEl.style.background = presets[themeName] || presets.glass;
+                }
+
+                // update selected class
+                themeOptions.forEach(opt => {
+                    opt.classList.toggle('selected', opt.dataset.theme === themeName);
+                });
+                currentTheme = themeName;
+            }
+
+            function updateGlassStyle() {
+                const opacity = opacitySlider.value;
+                const blur = blurSlider.value;
+                glassPanel.style.background = `rgba(255, 255, 255, ${opacity})`; // lighter base
+                glassPanel.style.backdropFilter = `blur(${blur}px) saturate(200%)`;
+                opacityVal.textContent = opacity;
+                blurVal.textContent = blur + 'px';
+            }
+
+            opacitySlider.addEventListener('input', updateGlassStyle);
+            blurSlider.addEventListener('input', updateGlassStyle);
+
+            // theme option click
+            themeOptions.forEach(opt => {
+                opt.addEventListener('click', () => {
+                    applyTheme(opt.dataset.theme);
+                });
+            });
+
+            // upload handlers
+            uploadImageBtn.addEventListener('click', () => {
+                fileInput.accept = 'image/*,.gif';
+                fileInput.click();
+            });
+            uploadVideoBtn.addEventListener('click', () => {
+                fileInput.accept = 'video/mp4';
+                fileInput.click();
+            });
+
+            fileInput.addEventListener('change', (e) => {
+                const file = e.target.files[0];
+                if (!file) return;
+                const url = URL.createObjectURL(file);
+                const type = file.type.startsWith('image') ? 'image' : 'video';
+                customMedia = { type, url };
+                applyTheme('custom');
+            });
+
+            // open/close panel
+            settingsBtn.addEventListener('click', () => {
+                overlay.classList.add('active');
+                themePanel.classList.add('active');
+            });
+
+            function closePanel() {
+                overlay.classList.remove('active');
+                themePanel.classList.remove('active');
+                // play video if it was paused (optional)
+                if (bgVideo.style.display === 'block') bgVideo.play().catch(() => {});
+            }
+
+            overlay.addEventListener('click', closePanel);
+            closeThemeBtn.addEventListener('click', closePanel);
+
+            // init
+            applyTheme('glass');
+            updateGlassStyle();
+        })();
+    </script>
+</body>
+</html>

@@ -1,4 +1,4 @@
-✨ Overview
+✨ Overview - Full Fun
 The Ultra-Glass Vibe Calculator is not just a tool—it's an experience. Designed for the modern user, it combines a powerful calculator with a stunning glassmorphism interface. Choose from preset themes or upload your own images, GIFs, or videos as the background. Adjust opacity and blur in real time to match your vibe.
 
 Perfect for students, creators, and anyone who appreciates beautiful design.
